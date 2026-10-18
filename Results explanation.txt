@@ -1,0 +1,155 @@
+Results explanation: 
+Every result in your output, explained
+
+I recomputed every number below independently and they match your console. Where I show a hand calculation, you can redo it on a calculator.
+
+0. How to read the number formats
+3.000e+00 means 3.000 × 10⁰ = 3. 2.308e-01 means 0.2308. 1.625e-13 means 0.0000000000001625.
+xn is printed with 15 decimals. The last digits are real but the computer only stores about 16 significant digits (double precision).
+A dash - means “no value”. The last point has no next step, and the first rows have no previous ratio.
+1. Header
+Test function: f(x) = x^3 + x^2 - 3x - 3, root = sqrt(3) = 1.732050807568877
+x0 = 2 | r0 = 1, r1 = 2 | tolerance e = 1e-10
+
+The problem we solve, the true root (used only to measure errors later), the starting points and the tolerance.
+
+2. Newton’s table
+
+The equation. Draw the tangent to f at xₙ and take where it crosses zero: xₙ₊₁ = xₙ − f(xₙ)/f′(xₙ). Here f′(x) = 3x² + 2x − 3.
+
+Row 0 by hand:
+
+f(2) = 8 + 4 − 6 − 3 = 3 (the table’s 3.000e+00)
+f′(2) = 12 + 4 − 3 = 13
+x₁ = 2 − 3/13 = 1.769230769…
+d₀ = |x₁ − x₀| = 3/13 = 0.2308 (the table’s 2.308e-01)
+
+The columns:
+
+xₙ is the current approximation.
+f(xₙ) shrinks 3 → 0.36 → 8e-3 → 5e-6 → 2e-12 → 2e-15, so we get closer to a zero.
+dₙ is the jump to the next point, which is also a computable estimate of the error (course slide 36).
+
+Why it stops at row 4: d₄ = 1.6e-13 < 10⁻¹⁰, so the iteration that produced x₅ passes the test. That is 5 iterations. Row 5 has no dₙ because there is no x₆.
+
+Quadratic convergence, with a number from your course. For quadratic convergence, eₙ₊₁ ≈ C·eₙ² (slide 36). I measured eₖ₊₁/eₖ² on your data: 0.52, 0.63, 0.654, 0.6549. It settles at 0.6549, and the theory says C = f″(r) / (2f′(r)) = 0.6547. Theory and data agree.
+
+3. Secant’s table
+
+The equation. Replace the tangent by the line through the last two points:
+xₙ₊₁ = xₙ − f(xₙ)·(xₙ − xₙ₋₁) / (f(xₙ) − f(xₙ₋₁)).
+
+First step by hand: x₀ = 1 (f = −4), x₁ = 2 (f = 3).
+x₂ = 2 − 3·(2 − 1)/(3 − (−4)) = 2 − 3/7 = 1.5714286 ✓.
+
+Reading it:
+
+d₀ = 1 is the distance between the two starting points. d₁ = 3/7 = 0.4286.
+The signs of f go − + − − + − − + +. At first the iterates jump around the root, then they close in.
+Stop: d₆ = 1.1e-7 is not below 10⁻¹⁰, but d₇ = 3.9e-12 is. That gives 7 iterations, and the final point is x₈.
+The table starts with two given points (n = 0 and 1), so it has more rows than Newton’s.
+4. Ostrowski’s table
+
+The equation (two steps per iteration):
+
+yₙ = xₙ − f(xₙ)/f′(xₙ), which is a Newton step.
+xₙ₊₁ = yₙ − [ f(xₙ) / (f(xₙ) − 2f(yₙ)) ] · [ f(yₙ) / f′(xₙ) ], which is a correction.
+
+First iteration by hand:
+
+f(2) = 3, f′(2) = 13, so y = 2 − 3/13 = 1.7692308.
+f(y) = 0.3604916.
+Factor: 3 / (3 − 2·0.3604916) = 1.31636.
+f(y)/f′(x) = 0.3604916 / 13 = 0.0277301.
+Correction = 1.31636 × 0.0277301 = 0.0365027.
+x₁ = 1.7692308 − 0.0365027 = 1.7327281 ✓.
+
+Why d₀ = 0.2673 is bigger than Newton’s 0.2308: the first step is Newton’s jump (0.2308), then the correction moves a further 0.0365 in the same direction. That extra move is why x₁ is already within 6.8e-4 of the root, while Newton’s x₁ was 0.037 away.
+
+Stop: after the second iteration d₂ = 4.4e-14, far below ε, so it stops with 3 iterations. It overshoots the tolerance by a lot, because order 4 means the error is raised roughly to the fourth power each step.
+
+5. Why f stays at ±1.776e-15 and never reaches 0
+
+In the last rows f(xₙ) = 1.776e-15 (Newton, Secant) and −1.776e-15 (Ostrowski). This is the computer’s limit, not an error in the method.
+
+Evaluating f(x) = x³ + x² − 3x − 3 near 1.73 adds terms of size about 5 (x³ ≈ 5.2, 3x ≈ 5.2) that nearly cancel.
+The computer stores numbers of size 4 to 8 on a grid with spacing 8.9 × 10⁻¹⁶.
+So the smallest non-zero value f can print is a multiple of that grid. 1.776e-15 = 2 × 8.9e-16.
+Even the best possible double near √3 gives −1.776e-15, although the exact value of f there is −9.5e-16. The difference is rounding in the evaluation.
+
+Once |f| is at this level, going further is impossible in double precision.
+
+6. The ACOC tables
+
+The columns:
+
+rₙ = dₙ / dₙ₋₁: how much the step shrank. Newton, n = 1: 3.631e-2 / 2.308e-1 = 0.1573.
+ln(rₙ): ln(0.1573) = −1.849. It measures the digits gained in that step.
+pₙ = ln(rₙ) / ln(rₙ₋₁): if the order is p, each step gains p times as many digits as the one before, so this ratio estimates p. Newton, n = 2: (−3.728) / (−1.849) = 2.016.
+
+Newton: 2.0160, 2.0029, 2.0002. It converges to 2 from above. The theory is confirmed.
+
+Secant: 1.37, 1.30, 1.49, 1.80, 1.53, 1.65. This wobbles around 1.618. The reason is that Secant’s error follows eₙ₊₁ ≈ C·eₙ·eₙ₋₁, which depends on the two previous errors, so the estimate converges slowly and irregularly.
+
+Ostrowski: the single value 3.9223 = ln(6.558e-11) / ln(2.534e-3) = (−23.45) / (−5.978). It is not exactly 4 because:
+
+C is not negligible after only 3 iterations.
+The step d₂ = 4.4e-14 is already close to the rounding noise.
+
+A better check uses the error equation directly: eₙ₊₁/eₙ⁴ ≈ 0.213 against the predicted 0.2114.
+
+The first rows have dashes because rₙ needs a previous step, and pₙ needs two ratios. The last row of each ACOC table only shows the final point.
+
+7. Part 4.4: every column
+Column	Meaning	Your values
+iters	Iterations to reach ε	5, 7, 3
+|y − r|	Distance to the computer’s √3	2.2e-16, 2.2e-16, 0
+|f(y)|	Residual	1.776e-15 for all three
+bound	|f(y)| / 2	8.882e-16
+p	Theoretical order	2, 1.618, 4
+m	Evaluations per iteration	2, 1, 3
+E	p^(1/m)	1.4142, 1.6180, 1.5874
+evals	Total evaluations	10, 8, 9
+Why 0.000e+00 for Ostrowski
+
+The error is computed as |y − sqrt(3)|, and sqrt(3) is itself a floating-point number.
+
+The true √3 is 1.73205080756887729…
+The nearest double is 1.73205080756887719…, which is 1.0e-16 below the true value.
+Ostrowski’s final answer is exactly that same double, so the subtraction gives exactly 0.
+Newton’s and Secant’s final answers are the next double up. The gap between neighbouring doubles near 1.73 is 2.22e-16, so their difference is 2.220e-16.
+
+All three printed roots look identical in 15 digits because the difference is in the 16th digit.
+
+So 0 does not mean “perfect” or “more accurate”. Measured against the true √3, the three errors are about 1.0e-16 (Ostrowski) and 1.2e-16 (Newton and Secant). They all differ by at most one rounding step. The honest conclusion is that accuracy is tied, and the 0 comes from the measuring stick, which is also rounded.
+
+Why |f(y)| is identical
+
+All three answers sit on the grid points described in section 5, so the smallest non-zero residual is the same 1.776e-15.
+
+What the bound means
+
+By slide 47, if |f′| ≥ 2 on [1, 2], then |y − r| ≤ |f(y)|/2 = 8.9e-16. It is a guarantee that does not need the exact root. It holds, since the true errors are about 1e-16 to 2e-16. It is limited by the same grid: a guarantee of 8.9e-16 is the best this residual can certify.
+
+How E and evals are computed
+E = p^(1/m): Newton 2^(1/2) = 1.414, Secant 1.618^(1/1) = 1.618, Ostrowski 4^(1/3) = 1.587.
+evals: Newton 5 × 2 = 10, Ostrowski 3 × 3 = 9, Secant 7 + 1 = 8 (the extra 1 is the second starting value).
+8. The last blocks of the output
+
+Root found: all three give 1.732050807568877 to 15 decimals.
+
+Last ACOC value: Newton 2.0002, Secant 1.6508, Ostrowski 3.9223, against the theory 2, 1.618 and 4.
+
+Notes, computed from the data:
+
+Accuracy is tied at the double-precision limit.
+The bound check passed.
+Ranking by E and by evaluations: Secant > Ostrowski > Newton.
+Ranking by iterations: Ostrowski < Newton < Secant.
+Ostrowski has one usable pₙ, so its experimental order is weak evidence.
+Our Secant code makes 2 calls per iteration, while the theory uses 1.
+What to remember for the report
+Each table row shows one step, and dₙ is the next jump. The jumps shrink fastest for Ostrowski.
+The experimental orders agree with the theory (2.000, about 1.6, about 3.9).
+Accuracy is a tie, limited by double precision. The 0 for Ostrowski is a measuring artifact.
+Secant wins on cost, Ostrowski on iterations, and Newton comes last on efficiency.
