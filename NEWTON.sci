@@ -1,15 +1,15 @@
-function [y,N] = NEWTON(f, df, x0, e)
-    nbMax = 100;
+function [y,n] = NEWTON(f, df, x0, e)
+    nbMax = 100; 
     rn = x0;  
-    N = 0 ; 
+    n = 0 ; 
     converged = %f; 
-    while N < nbMax 
+    while n < nbMax 
         d = df(rn); 
         if d == 0 then
             error("NEWTON: zero derivative at r_n = " + string(rn)); 
         end
         rn1 = rn - f(rn)/d; 
-        N = N + 1 ; 
+        n = n + 1 ; 
         
         if abs(rn1 - rn) < e then 
             converged = %t ; 
@@ -18,10 +18,9 @@ function [y,N] = NEWTON(f, df, x0, e)
         rn = rn1;  
     end
     if ~converged then
-        mprintf("NEWTON: tolerance not reached after %d iterations\n", N);
+        mprintf("NEWTON: tolerance not reached after %d iterations\n", n);
     end
     
     y = rn1; 
-    
     
 endfunction

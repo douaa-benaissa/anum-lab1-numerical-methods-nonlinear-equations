@@ -133,34 +133,43 @@ end
 // ---------- 7. Notes (computed from the results above, not typed in) ----------
 mprintf("\n~~~~ Notes ~~~~\n");
 
-// accuracy
+[vI, kI] = gsort(iters, "g", "i");
+[vT, kT] = gsort(tot,   "g", "i");
+[vE, kE] = gsort(E_idx, "g", "d");
+
+mprintf("- Fewest iterations  : %s (%d)\n", names(kI(1)), vI(1));
+mprintf("- Fewest evaluations : %s (%d)\n", names(kT(1)), vT(1));
+mprintf("- Best efficiency E  : %s (%.4f)\n", names(kE(1)), vE(1));
+
+if kI(1) <> kE(1) then
+    mprintf("- A higher order means fewer iterations, but each iteration costs more evaluations,\n");
+    mprintf("  so %s (fewest iterations) is not the most efficient method.\n", names(kI(1)));
+end
+
 if max(errs) < 10 * %eps * r_exact then
-    mprintf("- Accuracy: all three reach the double-precision limit (about %.1e), so accuracy is essentially tied.\n", %eps);
+    mprintf("- Accuracy: all three reach the double-precision limit, so it is the same for all.\n");
 else
     [vv, kk] = min(errs);
-    mprintf("- Accuracy: the smallest true error is %.3e (%s); the errors differ.\n", vv, names(kk));
-end
-if and(errs <= bound) then
-    mprintf("- The slide-47 bound is >= the true error for all three methods (check passed).\n");
-else
-    mprintf("- WARNING: a bound is smaller than the true error; check mm and the interval.\n");
+    mprintf("- Accuracy: the smallest error is %.3e (%s).\n", vv, names(kk));
 end
 
-// efficiency ranking
-[vE, kE] = gsort(E_idx, "g", "d");
-[vT, kT] = gsort(tot,   "g", "i");
-mprintf("- Ranking by efficiency index E (best first): %s > %s > %s\n", names(kE(1)), names(kE(2)), names(kE(3)));
-mprintf("- Ranking by total evaluations (fewest first): %s < %s < %s\n", names(kT(1)), names(kT(2)), names(kT(3)));
-[vI, kI] = gsort(iters, "g", "i");
-mprintf("- Ranking by iterations (fewest first): %s < %s < %s\n", names(kI(1)), names(kI(2)), names(kI(3)));
-
-// ACOC reliability
+// experimental order: last p_n of each method against the theory (5 percent tolerance)
+Ls = list(AN, AS, AO);
+ok = %t;
 for i = 1:3
-    if nvalid(i) < 2 then
-        mprintf("- %s has only %d usable p_n value(s): it converges in few iterations, so the experimental order is weak evidence.\n", names(i), nvalid(i));
+    A = Ls(i);
+    k = find(~isnan(A(:,6)));
+    if isempty(k) | abs(A(k($),6) - p_th(i)) / p_th(i) >= 0.05 then
+        ok = %f;
     end
 end
+if ok then
+    mprintf("- The experimental orders p_n agree with the theory (2, 1.618, 4).\n");
+else
+    mprintf("- At least one experimental order p_n does not agree with the theory.\n");
+end
+if nvalid(3) < 2 then
+    mprintf("  OSTROWSKI has only %d value of p_n, so its check is weak.\n", nvalid(3));
+end
 
-// the Secant implementation really calls fonc twice per iteration
-mprintf("- m counts every evaluation of f or df. Secant counts 1 because f(x(n-1)) can be reused;\n");
-mprintf("  our SECANTE code recomputes it, so it really makes 2 calls per iteration.\n");
+mprintf("- SECANTE counts m = 1 (f(x(n-1)) can be reused), but our code recomputes it: 2 calls per iteration.\n");
