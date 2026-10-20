@@ -16,6 +16,7 @@ for i = 1:size(files, "*")
 end
 
 // ---------- 1. Test problem (the lab sheet gives none: course example) ----------
+x = linspace(1,2,1001); 
 function y = f(x), y = x.^3 + x.^2 - 3*x - 3, endfunction
 function y = df(x), y = 3*x.^2 + 2*x - 3, endfunction
 
